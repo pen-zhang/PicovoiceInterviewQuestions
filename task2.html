@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Capital Cities</title>
+</head>
+
+<body>
+  <form name="search">
+    <label for="country">Country: </label>
+    <input type="text" id="country" name="inputCountryName" placeholder="input country name" />
+    <button type="submit" onclick="fetchCapitals(document.search.inputCountryName.value)">
+      search
+    </button>
+  </form>
+  <section id="capitals">
+    <ol id="capital-list"></ol>
+  </section>
+
+  <script>
+    // Explanation:
+    // user input can be a native name or a partial name
+    // when the input is a partial name, we only returns the first result in the API response
+    // 
+    // Output:
+    // 1. Return capital and neighbour capitals
+    //  Input: usa;
+    //  Result: United States of America
+    //      - Washington, D.C.
+    //      - Ottawa
+    //      - Mexico City
+    // 2. Return capital
+    //  Input: aus;
+    //  Result: Australia
+    //    - Canberra
+    // 3. Cannot find corresponding country with the input
+    //  Input: asd;
+    //  Result: Not Found
+    // 
+    // Todo:
+    // 1. we can store the results in local storage to reduce the frequency query of the API
+    // 2. we can add the validation of the user input
+
+    
+    const url = 'https://restcountries.eu/rest/v2/name/';
+
+    function fetchCapitals(inputText) {
+      event.preventDefault();
+      // console.log(inputText);
+
+      fetch(url + inputText)
+        .then((response) => {
+          // console.log(response);
+          if(response.status === 200)
+            return response.json();
+          else
+            throw new Error("Not Found");
+        })
+        .then((responseData) => handleCountryInfo(inputText, responseData))
+        .catch((e) => {
+          console.error(e);
+          handleNotFound(inputText);
+        });
+    }
+
+    function handleCountryInfo(inputText, responseData) {
+      // console.log(responseData[0]);
+      const countryInfo = responseData[0];
+
+      // get the html element where the country info should be inserted
+      let capitalList = document.getElementById('capital-list');
+
+      // output the inputText and corresponding country name
+      let countryFullName = document.createElement('li');
+      countryFullName.innerText = `Input: ${inputText};\n Result: ${countryInfo.name}`;
+      capitalList.appendChild(countryFullName);
+
+      // output the capital of the country
+      let capitals = document.createElement('ul');
+      let capital = document.createElement('li');
+      capital.innerText = countryInfo.capital;
+      capitals.appendChild(capital);
+
+      // output the capitals of neighbours
+      appendNeighbourCapitals(countryInfo, capitals);
+      capitalList.appendChild(capitals);
+    }
+
+    function handleNotFound(inputText){
+      // get the html element where the country info should be inserted
+      let capitalList = document.getElementById('capital-list');
+
+      // output the inputText and corresponding country name
+      let countryNotFound = document.createElement('li');
+      countryNotFound.innerText = `Input: ${inputText};\n Result: Not Found`;
+      capitalList.appendChild(countryNotFound);
+    }
+
+    function appendNeighbourCapitals(countryInfo, capitals) {
+      let neighbours = countryInfo.borders;
+      
+      // only output neighbour capitals when the country has neighbours
+      if (neighbours.length > 0) {
+        // change array to string separated by ";"
+        neighbourCodeList = neighbours.join(';');
+        // fetch neighbour countries by list of codes
+        fetch(
+          'https://restcountries.eu/rest/v2/alpha?codes=' + neighbourCodeList
+        )
+          .then((response) => response.json())
+          .then((neighbourCountryInfos) => {
+            for (let countryInfo of neighbourCountryInfos) {
+              if (countryInfo.capital) {
+                let li = document.createElement('li');
+                li.innerText = countryInfo.capital;
+                capitals.appendChild(li);
+              }
+            }
+          })
+          .catch((e) => console.log(e));
+      }
+    }
+  </script>
+</body>
+
+</html>

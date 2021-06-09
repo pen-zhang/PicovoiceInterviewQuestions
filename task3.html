@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rating</title>
+    <style>
+      h1 {
+        margin-bottom: 0;
+      }
+
+      .stars {
+        font-size: 48px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="product-list"></div>
+    <script>
+      // Explanation:
+      // Generate N product widgets on the page with showNProducts(N);
+      // Star changes:
+      //    white star --mouse over star--> grey star --mouse click star--> black star
+      //      ☆☆☆☆☆  --->  <span style="color: grey">★</span>★★★★   ---> ★☆☆☆☆
+      // After a star is clicked, the rating will be submitted
+      // User can resubmit a new rating
+      // 
+      // Next step:
+      // we can bind the rating with the a user id, so the rating can be preserved after page refreshes.
+
+      showNProducts(5);
+      let ratingStars = document.querySelectorAll('.stars');
+      ratingStars.forEach((ele) =>
+        ele.addEventListener('mouseover', mouseOverStar)
+      );
+      ratingStars.forEach((ele) =>
+        ele.addEventListener('click', mouseClickStar)
+      );
+
+      function showNProducts(n) {
+        console.log('insert products');
+        let productList = document.getElementById('product-list');
+        for (let i = 1; i <= n; i++) {
+          let product = document.createElement('div');
+          product.className = 'rating-widget';
+          product.innerHTML = `<h1>Product ${i}</h1>
+      <div class="rating-stars" id="product${i}">
+        <span class="stars" data-star-index="1">☆</span
+        ><span class="stars" data-star-index="2">☆</span
+        ><span class="stars" data-star-index="3">☆</span
+        ><span class="stars" data-star-index="4">☆</span
+        ><span class="stars" data-star-index="5">☆</span>
+        </div>
+    </div>`;
+          productList.appendChild(product);
+        }
+      }
+
+      function mouseOverStar() {
+        const targetStar = event.target;
+
+        if (targetStar.className === 'stars') {
+          let num = +targetStar.dataset.starIndex;
+
+          // Get the parent node of current star, then loop the child nodes
+          let productId = targetStar.parentNode.id;
+          // console.log('mouse enter', productId, 'star', num);
+          Array.from(document.getElementById(productId).children).forEach(
+            (node, idx) => {
+              if (idx < num) {
+                node.innerHTML = '<span style="color:grey;">★</span>';
+              } else {
+                node.innerText = '☆';
+              }
+            }
+          );
+
+          // add mouse leave event
+          targetStar.addEventListener(
+            'mouseleave',
+            () => handleMouseleave(productId, targetStar, num),
+            {
+              once: true,
+            }
+          );
+        }
+      }
+
+      function handleMouseleave(productId, curStar, num) {
+        // console.log(curStar.innerHTML);
+
+        if (curStar.innerHTML !== '★') {
+          Array.from(document.getElementById(productId).children).forEach(
+            (node, idx) => {
+              if (idx < num) {
+                node.innerText = '☆';
+              }
+            }
+          );
+          // console.log('mouse leave star', num);
+        }
+      }
+
+      function mouseClickStar() {
+        const targetStar = event.target.parentNode;
+        // console.log(targetStar, 'clicked');
+        if (targetStar.className === 'stars') {
+          // remove mouseover event to avoid re-firing the mouserover event
+          targetStar.removeEventListener('mouseover', mouseOverStar);
+
+          let num = +targetStar.dataset.starIndex;
+          let productId = targetStar.parentNode.id;
+
+          // console.log('star clicked');
+          Array.from(document.getElementById(productId).children).forEach(
+            (node, idx) => {
+              if (idx < num) {
+                node.innerText = '★';
+              } else {
+                node.innerText = '☆';
+              }
+            }
+          );
+          sendRatings(num);
+          // console.log('click event finished');
+
+          // add mouseover event, so user can resubmit a new rating
+          setTimeout(
+            () => targetStar.addEventListener('mouseover', mouseOverStar),
+            0
+          );
+        }
+      }
+
+      function sendRatings(data = 0) {
+        const serverUrl = '';
+        fetch(serverUrl, {
+          method: 'POST',
+          mode: 'cors',
+          body: data,
+        })
+          .then((res) => res.json())
+          .then((result) => console.log('Success:', result))
+          .catch((error) => console.log('Error:', error));
+        setTimeout(function () {
+          alert('rating submitted');
+        }, 0);
+      }
+    </script>
+  </body>
+</html>
