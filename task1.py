@@ -67,8 +67,8 @@ class LocalBookCache:
         self.book_records[isbn] = node
         self.add_to_head(node)
         self.size += 1
-        # check whether the capacity of the deque of query_history is full
-        # if it reaches the max length, we remove the tail node and corresponding record in book_records
+        # check whether the capacity of the cache is full
+        # if the size is over the capacity, we remove the tail node and corresponding record in book_records
         if self.size > self.capacity:
             removed = self.remove_tail()
             self.book_records.pop(removed.isbn)
